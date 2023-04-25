@@ -19,6 +19,68 @@
 using namespace nanogui;
 using namespace std;
 
+void NBodySimulator::load_shaders() {
+    std::set<std::string> shader_folder_contents;
+    bool success = FileUtils::list_files_in_directory(m_project_root + "/shaders", shader_folder_contents);
+    if (!success) {
+        std::cout << "Error: Could not find the shaders folder!" << std::endl;
+    }
+
+    std::string std_vert_shader = m_project_root + "/shaders/Default.vert";
+
+    for (const std::string& shader_fname : shader_folder_contents) {
+        std::string file_extension;
+        std::string shader_name;
+
+        FileUtils::split_filename(shader_fname, shader_name, file_extension);
+
+        if (file_extension != "frag") {
+            std::cout << "Skipping non-shader file: " << shader_fname << std::endl;
+            continue;
+        }
+
+        std::cout << "Found shader file: " << shader_fname << std::endl;
+
+        // Check if there is a proper .vert shader or not for it
+        std::string vert_shader = std_vert_shader;
+        std::string associated_vert_shader_path = m_project_root + "/shaders/" + shader_name + ".vert";
+        if (FileUtils::file_exists(associated_vert_shader_path)) {
+            vert_shader = associated_vert_shader_path;
+        }
+
+        std::shared_ptr<GLShader> nanogui_shader = make_shared<GLShader>();
+        nanogui_shader->initFromFiles(shader_name, vert_shader,
+            m_project_root + "/shaders/" + shader_fname);
+
+        // Special filenames are treated a bit differently
+        ShaderTypeHint hint;
+        if (shader_name == "Wireframe") {
+            hint = ShaderTypeHint::WIREFRAME;
+            std::cout << "Type: Wireframe" << std::endl;
+        }
+        else if (shader_name == "Normal") {
+            hint = ShaderTypeHint::NORMALS;
+            std::cout << "Type: Normal" << std::endl;
+        }
+        else {
+            hint = ShaderTypeHint::PHONG;
+            std::cout << "Type: Custom" << std::endl;
+        }
+
+        UserShader user_shader(shader_name, nanogui_shader, hint);
+
+        shaders.push_back(user_shader);
+        shaders_combobox_names.push_back(shader_name);
+    }
+
+    // Assuming that it's there, use "Wireframe" by default
+    for (size_t i = 0; i < shaders_combobox_names.size(); ++i) {
+        //if (shaders_combobox_names[i] == "Wireframe") {
+            active_shader_idx = i;
+            break;
+        //}
+    }
+}
 
 NBodySimulator::NBodySimulator(std::string project_root, Screen* screen) : m_project_root(project_root)
     {
@@ -33,7 +95,8 @@ NBodySimulator::~NBodySimulator() {
   for (auto shader : shaders) {
     shader.nanogui_shader->free();
   }
-  if (particles) delete particles;
+  
+  if (system) delete system;
 
 }
 
@@ -87,7 +150,10 @@ void NBodySimulator::init() {
 
 bool NBodySimulator::isAlive() { return is_alive; }
 
-void NBodySimulator::loadParticles(vector<Particle*>* particles) { this->particles = particles; }
+void NBodySimulator::loadSystem(System* system) {
+  this->system = system;
+  system->buildSystem();
+}
 
 void NBodySimulator::drawContents() {
   glEnable(GL_DEPTH_TEST);
@@ -95,9 +161,9 @@ void NBodySimulator::drawContents() {
   if (!is_paused) {
     vector<CGL::Vector3D> external_accelerations = { gravity };
 
-    /*for (int i = 0; i < simulation_steps; i++) {
-      cloth->simulate(frames_per_sec, simulation_steps, cp, external_accelerations, collision_objects);
-    }*/
+    for (int i = 0; i < simulation_steps; i++) {
+      system->simulate(frames_per_sec, simulation_steps, external_accelerations);
+    }
   }
 
   // Bind the active shader
@@ -121,7 +187,7 @@ void NBodySimulator::drawContents() {
   shader.setUniform("u_view_projection", viewProjection);
 
 
-  for (Particle* p : *particles) {
+  for (Particle* p : system->particles) {
     p->render(shader);
   }
   
@@ -269,6 +335,7 @@ bool NBodySimulator::keyCallbackEvent(int key, int scancode, int action,
       break;
     case 'r':
     case 'R':
+      system->reset();
       break;
     case ' ':
       resetCamera();
@@ -307,70 +374,6 @@ bool NBodySimulator::resizeCallbackEvent(int width, int height) {
   camera.set_screen_size(screen_w, screen_h);
   return true;
 }
-
-void NBodySimulator::load_shaders() {
-  std::set<std::string> shader_folder_contents;
-  bool success = FileUtils::list_files_in_directory(m_project_root + "/shaders", shader_folder_contents);
-  if (!success) {
-    std::cout << "Error: Could not find the shaders folder!" << std::endl;
-  }
-
-  std::string std_vert_shader = m_project_root + "/shaders/Default.vert";
-
-  for (const std::string& shader_fname : shader_folder_contents) {
-    std::string file_extension;
-    std::string shader_name;
-
-    FileUtils::split_filename(shader_fname, shader_name, file_extension);
-
-    if (file_extension != "frag") {
-      std::cout << "Skipping non-shader file: " << shader_fname << std::endl;
-      continue;
-    }
-
-    std::cout << "Found shader file: " << shader_fname << std::endl;
-
-    // Check if there is a proper .vert shader or not for it
-    std::string vert_shader = std_vert_shader;
-    std::string associated_vert_shader_path = m_project_root + "/shaders/" + shader_name + ".vert";
-    if (FileUtils::file_exists(associated_vert_shader_path)) {
-      vert_shader = associated_vert_shader_path;
-    }
-
-    std::shared_ptr<GLShader> nanogui_shader = make_shared<GLShader>();
-    nanogui_shader->initFromFiles(shader_name, vert_shader,
-      m_project_root + "/shaders/" + shader_fname);
-
-    // Special filenames are treated a bit differently
-    ShaderTypeHint hint;
-    if (shader_name == "Wireframe") {
-      hint = ShaderTypeHint::WIREFRAME;
-      std::cout << "Type: Wireframe" << std::endl;
-    }
-    else if (shader_name == "Normal") {
-      hint = ShaderTypeHint::NORMALS;
-      std::cout << "Type: Normal" << std::endl;
-    }
-    else {
-      hint = ShaderTypeHint::PHONG;
-      std::cout << "Type: Custom" << std::endl;
-    }
-
-    UserShader user_shader(shader_name, nanogui_shader, hint);
-
-    shaders.push_back(user_shader);
-    shaders_combobox_names.push_back(shader_name);
-  }
-
-  // Assuming that it's there, use "Wireframe" by default
-  for (size_t i = 0; i < shaders_combobox_names.size(); ++i) {
-    if (shaders_combobox_names[i] == "Wireframe") {
-      active_shader_idx = i;
-      break;
-    }
-  }
-}
-
 
 void NBodySimulator::initGUI(Screen* screen) {
   Window* window;

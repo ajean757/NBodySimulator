@@ -16,6 +16,7 @@
 #include "CGL/CGL.h"
 #include "particle.h"
 #include "nBodySimulator.h"
+#include "system.h"
 #include "json.hpp"
 #include "misc/file_utils.h"
 
@@ -215,11 +216,8 @@ int main(int argc, char** argv) {
   app = new NBodySimulator(project_root, screen);
   app->init();
   
-  Particle* p0 = new Particle(Vector3D(0.0), 1.0, 10.0);
-  vector<Particle*>* particles = new vector<Particle*>();
-  particles->push_back(p0);
-  app->loadParticles(particles);
-
+  System* system = new System();
+  app->loadSystem(system);
 
   screen->setVisible(true);
   screen->performLayout();

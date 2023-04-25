@@ -9,16 +9,26 @@ using namespace CGL;
 using namespace std;
 
 struct Particle {
-public:
-	Particle(Vector3D origin, double radius, double mass) : origin(origin), radius(radius), mass(mass), m_sphere_mesh(Misc::SphereMesh()) {}
-
-	void render(GLShader& shader);
+	Particle(Vector3D position, double radius, double mass, bool pinned)
+		: position(position), radius(radius), mass(mass), pinned(pinned),
+		start_position(position), m_sphere_mesh(Misc::SphereMesh()) {}
 	
-private:
-	Vector3D origin;
+	void render(GLShader& shader);
+
+	// static values
 	double radius;
 	double mass;
+	bool pinned;
+	Vector3D start_position;
+
+	// dynamic values
+	Vector3D position;
+	Vector3D last_position;
+	Vector3D forces;
+
+private:
 	Misc::SphereMesh m_sphere_mesh;
+
 };
 
 #endif /* PARTICLE_H */

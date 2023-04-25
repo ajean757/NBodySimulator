@@ -10,6 +10,7 @@ set(NBODY_VIEWER_SOURCE
     #collision/sphere.cpp
     #collision/plane.cpp
     particle.cpp
+    system.cpp
     # Application
     main.cpp
     nBodySimulator.cpp

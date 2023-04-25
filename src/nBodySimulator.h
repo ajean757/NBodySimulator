@@ -5,8 +5,8 @@
 #include <memory>
 
 #include "camera.h"
+#include "system.h"
 #include "particle.h"
-
 
 using namespace nanogui;
 
@@ -21,7 +21,7 @@ public:
 
   void init();
 
-  void loadParticles(vector<Particle*>* particles);
+  void loadSystem(System* loadSystem);
   virtual bool isAlive();
   virtual void drawContents();
 
@@ -57,7 +57,8 @@ private:
   CGL::Vector3D gravity = CGL::Vector3D(0, -9.8, 0);
   nanogui::Color color = nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-  vector<Particle*>* particles;
+  System* system;
+
   // OpenGL attributes
 
   int active_shader_idx;

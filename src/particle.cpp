@@ -6,6 +6,8 @@
 using namespace nanogui;
 using namespace CGL;
 
+
+
 void Particle::render(GLShader& shader) {
-	m_sphere_mesh.draw_sphere(shader, origin, radius);
+	m_sphere_mesh.draw_sphere(shader, position, radius);
 }
