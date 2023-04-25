@@ -11,9 +11,10 @@ using namespace std;
 struct Particle {
 	Particle(Vector3D position, double radius, double mass, bool pinned)
 		: position(position), radius(radius), mass(mass), pinned(pinned),
-		start_position(position), m_sphere_mesh(Misc::SphereMesh()) {}
+		start_position(position), velocity(Vector3D()), m_sphere_mesh(Misc::SphereMesh()) {}
 	
 	void render(GLShader& shader);
+	
 
 	// static values
 	double radius;
@@ -25,6 +26,7 @@ struct Particle {
 	Vector3D position;
 	Vector3D last_position;
 	Vector3D forces;
+	Vector3D velocity;
 
 private:
 	Misc::SphereMesh m_sphere_mesh;
