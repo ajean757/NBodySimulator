@@ -147,6 +147,7 @@ bool is_valid_project_root(const std::string& search_path) {
   std::stringstream ss;
   ss << search_path;
   ss << "/";
+  ss << "shaders/Default.vert";
 
 
   return FileUtils::file_exists(ss.str());
@@ -214,7 +215,7 @@ int main(int argc, char** argv) {
   app = new NBodySimulator(project_root, screen);
   app->init();
   
-  Particle* p0 = new Particle(Vector3D(0.0), 10.0, 10.0);
+  Particle* p0 = new Particle(Vector3D(0.0), 1.0, 10.0);
   vector<Particle*>* particles = new vector<Particle*>();
   particles->push_back(p0);
   app->loadParticles(particles);
