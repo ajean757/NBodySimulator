@@ -5,16 +5,23 @@
 #include <memory>
 
 #include "camera.h"
+#include "particle.h"
+
 
 using namespace nanogui;
 
+
+struct UserShader;
+enum ShaderTypeHint { WIREFRAME = 0, NORMALS = 1, PHONG = 2 };
+
 class NBodySimulator {
 public:
-  NBodySimulator(Screen* screen);
+  NBodySimulator(std::string project_root, Screen* screen);
   ~NBodySimulator();
 
   void init();
 
+  void loadParticles(vector<Particle*>* particles);
   virtual bool isAlive();
   virtual void drawContents();
 
@@ -30,7 +37,8 @@ public:
 private:
   virtual void initGUI(Screen* screen);
   
-
+  void load_shaders();
+  
   // File management
 
   std::string m_project_root;
@@ -49,10 +57,11 @@ private:
   CGL::Vector3D gravity = CGL::Vector3D(0, -9.8, 0);
   nanogui::Color color = nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-
+  vector<Particle*>* particles;
   // OpenGL attributes
 
-
+  int active_shader_idx;
+  vector<UserShader> shaders;
   vector<std::string> shaders_combobox_names;
 
   // OpenGL textures
@@ -109,5 +118,17 @@ private:
   Vector2i default_window_size = Vector2i(1024, 800);
 };
 
+struct UserShader {
+  UserShader(std::string display_name, std::shared_ptr<GLShader> nanogui_shader, ShaderTypeHint type_hint)
+    : display_name(display_name)
+    , nanogui_shader(nanogui_shader)
+    , type_hint(type_hint) {
+  }
+
+  std::shared_ptr<GLShader> nanogui_shader;
+  std::string display_name;
+  ShaderTypeHint type_hint;
+
+};
 
 #endif // CGL_N_BODY_SIMULATOR_H

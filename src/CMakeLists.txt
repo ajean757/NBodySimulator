@@ -9,14 +9,14 @@ set(NBODY_VIEWER_SOURCE
     # Collision objects
     #collision/sphere.cpp
     #collision/plane.cpp
-
+    particle.cpp
     # Application
     main.cpp
     nBodySimulator.cpp
 
     # Miscellaneous
     #png.cpp
-    #misc/sphere_drawing.cpp
+    misc/sphere_drawing.cpp
     misc/file_utils.cpp
 
     # Camera

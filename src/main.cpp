@@ -12,8 +12,10 @@
 #include <unordered_set>
 #include <stdlib.h> // atoi for getopt inputs
 
-#include "nBodySimulator.h"
+#include "misc/sphere_drawing.h"
 #include "CGL/CGL.h"
+#include "particle.h"
+#include "nBodySimulator.h"
 #include "json.hpp"
 #include "misc/file_utils.h"
 
@@ -21,6 +23,7 @@ typedef uint32_t gid_t;
 
 using namespace std;
 using namespace nanogui;
+using namespace CGL;
 
 
 Screen* screen = nullptr;
@@ -54,7 +57,7 @@ void createGLContexts() {
   glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
   // Create a GLFWwindow object
-  window = glfwCreateWindow(800, 800, "Cloth Simulator", nullptr, nullptr);
+  window = glfwCreateWindow(800, 800, "N Body Simulator", nullptr, nullptr);
   if (window == nullptr) {
     std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -127,6 +130,19 @@ void setGLFWCallbacks() {
     });
 }
 
+void usageError(const char* binaryName) {
+  printf("Usage: %s [options]\n", binaryName);
+  printf("Required program options:\n");
+  printf("  -f     <STRING>    Filename of scene\n");
+  printf("  -r     <STRING>    Project root.\n");
+  printf("                     Should contain \"shaders/Default.vert\".\n");
+  printf("                     Automatically searched for by default.\n");
+  printf("  -a     <INT>       Sphere vertices latitude direction.\n");
+  printf("  -o     <INT>       Sphere vertices longitude direction.\n");
+  printf("\n");
+  exit(-1);
+}
+
 bool is_valid_project_root(const std::string& search_path) {
   std::stringstream ss;
   ss << search_path;
@@ -157,14 +173,52 @@ int main(int argc, char** argv) {
   };
   std::string project_root;
   bool found_project_root = find_project_root(search_paths, project_root);
+  int c;
+  std::string file_to_load_from;
+  bool file_specified = false;
 
+  while ((c = getopt(argc, argv, "f:r:a:o:")) != -1) {
+    switch (c) {
+    case 'f': {
+      file_to_load_from = optarg;
+      file_specified = true;
+      break;
+    }
+    case 'r': {
+      project_root = optarg;
+      if (!is_valid_project_root(project_root)) {
+        std::cout << "Warn: Could not find required file \"shaders/Default.vert\" in specified project root: " << project_root << std::endl;
+      }
+      found_project_root = true;
+      break;
+    }
+    default: {
+      usageError(argv[0]);
+      break;
+    }
+    }
+  }
+
+  if (!found_project_root) {
+    std::cout << "Error: Could not find required file \"shaders/Default.vert\" anywhere!" << std::endl;
+    return -1;
+  }
+  else {
+    std::cout << "Loading files starting from: " << project_root << std::endl;
+  }
 
   glfwSetErrorCallback(error_callback);
 
   createGLContexts();
 
-  app = new NBodySimulator(screen);
+  app = new NBodySimulator(project_root, screen);
   app->init();
+  
+  Particle* p0 = new Particle(Vector3D(0.0), 10.0, 10.0);
+  vector<Particle*>* particles = new vector<Particle*>();
+  particles->push_back(p0);
+  app->loadParticles(particles);
+
 
   screen->setVisible(true);
   screen->performLayout();
@@ -179,6 +233,9 @@ int main(int argc, char** argv) {
     glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+
+    app->drawContents();
 
     // Draw nanogui
     screen->drawContents();
