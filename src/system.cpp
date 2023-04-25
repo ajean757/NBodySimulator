@@ -3,9 +3,11 @@
 #include <random>
 #include <vector>
 
+#include "sampler.h"
 #include "system.h"
 
 using namespace std;
+using namespace CGL;
 
 System::~System() {
   // Destructor
@@ -16,14 +18,23 @@ System::~System() {
 }
 
 void System::buildSystem() {
-  Particle* p0 = new Particle(Vector3D(0.0), 1.0, 1.0e10, false);
+ /* Particle* p0 = new Particle(Vector3D(0.0), 1.0, 1.0e10, false);
   Particle* p1 = new Particle(Vector3D(2.0), 1.0, 1.0e10, false);
-  Particle* p2 = new Particle(Vector3D(-1.0, 0.0, 3.0), 1.0, 1.0e10, false);
-
+  Particle* p2 = new Particle(Vector3D(-1.0, 0.0, 3.0), 1.0, 1.0e10, false);*/
   particles = vector<Particle*>();
+  Particle *p0 = new Particle(Vector3D(0.0), 2.0, 1e16, false);
   particles.push_back(p0);
-  particles.push_back(p1);
-  particles.push_back(p2);
+
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
+  double max_radius = 20.0;
+  int num_particles = 5;
+  for (int i = 0; i < num_particles; i++) {
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D pos = Vector3D(sample.x, sample.y, 0.0);
+    Particle* p = new Particle(pos, 0.5, 1.0e9, false);
+    particles.push_back(p);
+  }
+  
 
 }
 
@@ -42,11 +53,11 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     for (int j = 0; j < particles.size(); j++) {
       if (i != j) {
         Vector3D distance = particles[j]->position - particles[i]->position;
-        double dist_cubed = pow(distance.norm2(), 3);
+        double damping = 2.0;
+        double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
         double masses = particles[i]->mass * particles[j]->mass;
         Vector3D force = grav_const * masses / dist_cubed * distance;
         particles[i]->forces += force;
-        particles[j]->forces -= force;
       }
     }
   }

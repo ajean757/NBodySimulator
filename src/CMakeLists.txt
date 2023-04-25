@@ -14,7 +14,7 @@ set(NBODY_VIEWER_SOURCE
     # Application
     main.cpp
     nBodySimulator.cpp
-
+    sampler.cpp
     # Miscellaneous
     #png.cpp
     misc/sphere_drawing.cpp
