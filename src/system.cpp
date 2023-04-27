@@ -81,10 +81,13 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     p->position += p->velocity * delta_t;
     p->velocity += p->forces / p->mass * delta_t;*/
 
+    Vector3D a_prev = p->acceleration;
+    p->acceleration = p->forces / p->mass;
+
     // Leapfrog integration
     p->last_position = p->position;
     p->position = p->position + p->velocity * delta_t + 0.5 * (p->forces / p->mass) * (delta_t * delta_t);
-    p->velocity = p->velocity + 0.5 * (p->forces / p->mass) * delta_t;
+    p->velocity = p->velocity + 0.5 * (a_prev + p->acceleration) * delta_t;
 
     //cout << "particle loc: " << p->position << "forces: " << p->forces  << "velocity" << p->velocity << "\n";
   }
@@ -102,6 +105,7 @@ void System::reset() {
   for (int i = 0; i < particles.size(); i++) {
     p->position = p->start_position;
     p->last_position = p->start_position;
+    p->acceleration = 0;
     p++;
   }
 }
