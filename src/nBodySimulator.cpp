@@ -73,12 +73,12 @@ void NBodySimulator::load_shaders() {
     shaders_combobox_names.push_back(shader_name);
   }
 
-  // Assuming that it's there, use "Wireframe" by default
+  // Assuming that it's there, use "Normal" by default
   for (size_t i = 0; i < shaders_combobox_names.size(); ++i) {
-    //if (shaders_combobox_names[i] == "Wireframe") {
+    if (shaders_combobox_names[i] == "Normal") {
     active_shader_idx = i;
     break;
-    //}
+    }
   }
 }
 
@@ -185,6 +185,12 @@ void NBodySimulator::drawContents() {
 
   shader.setUniform("u_model", model);
   shader.setUniform("u_view_projection", viewProjection);
+
+  Vector3D cam_pos = camera.position();
+  shader.setUniform("u_color", color, false);
+  shader.setUniform("u_cam_pos", Vector3f(cam_pos.x, cam_pos.y, cam_pos.z), false);
+  shader.setUniform("u_light_pos", Vector3f(0, 0, 15), false);
+  shader.setUniform("u_light_intensity", Vector3f(5, 5, 5), false);
 
 
   for (Particle* p : system->particles) {
@@ -384,19 +390,32 @@ void NBodySimulator::initGUI(Screen* screen) {
 
   // Spring types
 
-  new Label(window, "Spring types", "sans-bold");
+  new Label(window, "System types", "sans-bold");
 
   {
-    Button* b = new Button(window, "structural");
-    b->setFlags(Button::ToggleButton);
+    Button* b = new Button(window, "Single Star System");
+    b->setFlags(Button::NormalButton);
     b->setFontSize(14);
+    b->setCallback([this]() {
+      is_paused = true;
+      system->reset();
+      system->active_system_type = 0;
+      system->buildSystem();
+     });
+    
 
-    b = new Button(window, "shearing");
-    b->setFlags(Button::ToggleButton);
+    b = new Button(window, "Two Galaxy Collision");
+    b->setFlags(Button::NormalButton);
     b->setFontSize(14);
+    b->setCallback([this]() {
+      is_paused = true;
+      system->reset();
+      system->active_system_type = 1;
+      system->buildSystem();
+    });
 
-    b = new Button(window, "bending");
-    b->setFlags(Button::ToggleButton);
+    b = new Button(window, "n/a");
+    b->setFlags(Button::NormalButton);
     b->setFontSize(14);
 
   }
@@ -544,9 +563,11 @@ void NBodySimulator::initGUI(Screen* screen) {
 
   {
 
-
     ComboBox* cb = new ComboBox(window, shaders_combobox_names);
     cb->setFontSize(14);
+    cb->setCallback(
+      [this, screen](int idx) { active_shader_idx = idx; });
+    cb->setSelectedIndex(active_shader_idx);
 
   }
 

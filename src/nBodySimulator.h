@@ -55,8 +55,9 @@ private:
   int simulation_steps = 30;
 
   CGL::Vector3D gravity = CGL::Vector3D(0, -9.8, 0);
-  nanogui::Color color = nanogui::Color(1.0f, 1.0f, 1.0f, 1.0f);
+  nanogui::Color color = nanogui::Color(1.0f, 100.0f, 255.0f, 1.0f);
 
+  // System 
   System* system;
 
   // OpenGL attributes
