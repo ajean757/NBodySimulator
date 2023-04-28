@@ -18,21 +18,24 @@ System::~System() {
 }
 
 void System::buildSystem() {
- /* Particle* p0 = new Particle(Vector3D(0.0), 1.0, 1.0e10, false);
-  Particle* p1 = new Particle(Vector3D(2.0), 1.0, 1.0e10, false);
-  Particle* p2 = new Particle(Vector3D(-1.0, 0.0, 3.0), 1.0, 1.0e10, false);*/
-  particles = vector<Particle*>();
-  double central_mass = 1e18;
-  Particle *p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
-  particles.push_back(p0);
   const double grav_const = 6.674e-11;
 
+  // Build cluster 1, centered at p0
+  particles = vector<Particle*>();
+  double central_mass = 1e19;
+  Particle *p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
+  particles.push_back(p0);
+
   UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
-  double max_radius = 20.0;
-  int num_particles = 20;
+  double max_radius = 10.0;
+  int num_particles = 70;
   for (int i = 0; i < num_particles; i++) {
+    /*if (i != 0 && i % 15 == 0) {
+      max_radius += 5;
+    }*/
     Vector3D sample = gridSampler.get_sample() * max_radius;
-    Vector3D pos = Vector3D(sample.x, sample.y, 0.0);
+    Vector3D pos = Vector3D(sample.x, sample.y, ((-1000 + rand() % 2000) / 1000.0) * 2.0);
+
     Vector3D dist_from_center = pos - Vector3D(0.0);
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm2()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-2;
@@ -40,8 +43,34 @@ void System::buildSystem() {
     p->velocity = initial_v;
     particles.push_back(p);
   }
-  
 
+  // Build cluster 2, centered at p0, add initial velocity 
+  central_mass = 5e18;
+  double offset = 15.0;
+  Particle* p1 = new Particle(Vector3D(offset, offset, 0.0), 1.25, central_mass, false);
+  Vector3D dist_from_center = Vector3D(offset, offset, 0.0) - Vector3D(0.0);
+  dist_from_center.normalize();
+  Vector3D initial_v = sqrt(grav_const * 1e19 / Vector3D(offset, offset, 0.0).norm2()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-2;
+  p1->velocity = initial_v;
+  particles.push_back(p1);
+
+  num_particles = 30;
+  max_radius = 5.0;
+
+  for (int i = 0; i < num_particles; i++) {
+    /*if (i != 0 && i % 15 == 0) {
+      max_radius += 5;
+    }*/
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D pos = Vector3D(sample.x + offset, sample.y + offset, ((-1000 + rand() % 2000) / 1000.0) * 2.0);
+
+    Vector3D dist_from_center = pos - Vector3D(offset);
+    dist_from_center.normalize();
+    Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm2()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 5e-2;
+    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    p->velocity = initial_v;
+    particles.push_back(p);
+  }
 }
 
 void System::simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations) {
@@ -55,23 +84,22 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
   // Note: unoptimized
   const double grav_const = 6.674e-11;
   for (int i = 0; i < particles.size(); i++) {
-    for (int j = 0; j < particles.size(); j++) {
-      if (i != j) {
-        Vector3D distance = particles[j]->position - particles[i]->position;
+    for (int j = i; j < particles.size(); j++) {
+      Vector3D distance = particles[j]->position - particles[i]->position;
 
-        double damping = 15.0;
-        double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
-        double masses = particles[i]->mass * particles[j]->mass;
-        //distance.normalize();
-        Vector3D force = grav_const * masses / dist_cubed * distance;
-        particles[i]->forces += force;
-        //particles[j]->forces -= force;
-      }
-      
+      double damping = 15.0;
+      double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
+      double masses = particles[i]->mass * particles[j]->mass;
+      //distance.normalize();
+      Vector3D force = grav_const * masses / dist_cubed * distance;
+      particles[i]->forces += force;
+      particles[j]->forces -= force;      
     }
   }
 
   for (Particle* p : particles) {
+    // numerical analysis
+
     /*Vector3D prev_pos = p->position;
     p->position = p->position + 0.9 * (p->position - p->last_position) * delta_t + (p->forces / p->mass * delta_t * delta_t);
     p->last_position = prev_pos;*/
@@ -101,11 +129,8 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
 ///////////////////////////////////////////////////////
 
 void System::reset() {
-  Particle* p = particles[0];
-  for (int i = 0; i < particles.size(); i++) {
-    p->position = p->start_position;
-    p->last_position = p->start_position;
-    p->acceleration = 0;
-    p++;
+  for (auto p : particles) {
+    delete p;
   }
+  buildSystem();
 }
