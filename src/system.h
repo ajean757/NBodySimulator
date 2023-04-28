@@ -13,7 +13,7 @@ using namespace std;
 
 
 struct System {
-  System() {}
+  System() : active_system_type(0), timestep(0) {}
   ~System();
 
   void buildSystem();
@@ -26,17 +26,17 @@ struct System {
   // void self_collide(PointMass& pm, double simulation_steps);
 
   // System properties
-  //double width;
-  //double height;
-  //int num_width_points;
-  //int num_height_points;
-  //double thickness;
-  //e_orientation orientation;
+  int active_system_type;
+  int timestep;
+  double tot_kinetic_energy;
+  double tot_potential_energy;
 
   // System components
   vector<Particle*> particles;
   // vector<vector<int>> pinned; might wanna keep this pinned list in case we wanna emulate light a solar system with a static sun in the middle or something?
-
+private:
+  void buildTwoGalaxyCollision(int num_particles0, int num_particles1);
+  void buildSingleStarSystem(int num_particles);
 };
 
 #endif /* SYSTEM_H */
