@@ -19,6 +19,7 @@ set(NBODY_VIEWER_SOURCE
     #png.cpp
     misc/sphere_drawing.cpp
     misc/file_utils.cpp
+    bhTree.cpp
 
     # Camera
     camera.cpp

@@ -5,6 +5,7 @@
 
 #include "sampler.h"
 #include "system.h"
+#include "bhTree.h"
 
 using namespace std;
 using namespace CGL;
@@ -71,6 +72,15 @@ void System::buildSystem() {
     p->velocity = initial_v;
     particles.push_back(p);
   }
+
+  //Vector3D bb_lbb = Vector3D(-100.0);
+  //Vector3D bb_rtf = Vector3D(100.0);
+  //BHTree* tree = new BHTree(bb_lbb, bb_rtf);
+
+  //for (Particle* p : particles) {
+  //  tree->insert(p);
+  //}
+
 }
 
 void System::simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations) {
