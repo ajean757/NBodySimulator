@@ -20,6 +20,7 @@ struct BHTree {
 	int getOctant(Particle* p);
 	Vector3D computeForces(Particle* p);
 	int traverseTree(BHTree* node);
+	void pruneTree(BHTree* node);
 
 	Particle* particle;
 	BHTree* children[8];
@@ -28,6 +29,7 @@ struct BHTree {
 	bool is_internal;
 	double total_mass;
 	Vector3D com; // center of mass
+	double dist_scaling = 1e4;
 
 };
 

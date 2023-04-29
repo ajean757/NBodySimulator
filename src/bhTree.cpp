@@ -57,7 +57,7 @@ void BHTree::insert(Particle* p) {
     children[getOctant(p)]->insert(p);
 	}
   // External populated node (already has a particle)
-  else {
+  if (is_internal && particle != NULL) {
     double midx = (left_bottom_back.x + right_top_front.x) / 2;
     double midy = (left_bottom_back.y + right_top_front.y) / 2;
     double midz = (left_bottom_back.z + right_top_front.z) / 2;
@@ -147,11 +147,11 @@ Vector3D BHTree::computeForces(Particle* p) {
   Vector3D force = Vector3D(0.0);
   
   if (!is_internal && particle != NULL) {
-    Vector3D distance = particle->position - p->position;
+    Vector3D distance = (particle->position - p->position) * dist_scaling;
     const double grav_const = 6.674e-11;
 
-    double damping = 15.0;
-    double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
+    double damping = 0.00001;
+    double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
     double masses = particle->mass * p->mass;
     //distance.normalize();
     force += grav_const * masses / dist_cubed * distance;
@@ -160,16 +160,16 @@ Vector3D BHTree::computeForces(Particle* p) {
   }
   double r = (p->position - com).norm();
   double D = (right_top_front - left_bottom_back).norm();
-  double theta = 5.0;
+  double theta = 0.5;
   //cout << "D / r = " << D / r << "\n";
 
   if (D / r < theta) {
     // sufficiently far => treat internal node like a single big particle
-    Vector3D distance = com - p->position;
+    Vector3D distance = (com - p->position) * dist_scaling;
     const double grav_const = 6.674e-11;
 
-    double damping = 15.0;
-    double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
+    double damping = 0.00001;
+    double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
     double masses = total_mass * p->mass;
     //distance.normalize();
     force += grav_const * masses / dist_cubed * distance;
@@ -180,7 +180,6 @@ Vector3D BHTree::computeForces(Particle* p) {
     for (int i = 0; i < 8; i++) {
       force += children[i]->computeForces(p);
     }
-   
   }
   return force;
 }
@@ -200,4 +199,24 @@ int BHTree::traverseTree(BHTree* node) {
     sum += traverseTree(node->children[i]);
   }
   return sum;
+}
+
+void BHTree::pruneTree(BHTree* node) {
+  if (node == NULL) {
+    return;
+  }
+  if (!node->is_internal && node->particle != NULL) {
+    return;
+  }
+  
+  for (int i = 0; i < 8; i++) {
+    pruneTree(node->children[i]);
+  }
+  if (!node->is_internal && node->particle == NULL) {
+    cout << "delete";
+    delete node;
+  }
+
+  
+  return;
 }

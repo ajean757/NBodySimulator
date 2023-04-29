@@ -30,7 +30,7 @@ struct System {
   int timestep;
   double tot_kinetic_energy;
   double tot_potential_energy;
-
+  double dist_scaling = 1e4;
   // System components
   vector<Particle*> particles;
   // vector<vector<int>> pinned; might wanna keep this pinned list in case we wanna emulate light a solar system with a static sun in the middle or something?
