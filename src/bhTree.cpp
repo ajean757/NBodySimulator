@@ -16,21 +16,18 @@ BHTree::BHTree(Vector3D left_bottom_back, Vector3D right_top_front) {
     children[i] = NULL;
 }
 
-BHTree* destructTree(BHTree* node) {
+void clear(BHTree* node) {
   if (node == NULL)
-    return NULL;
-  if (!node->is_internal)
-    delete node;
+    return;
 
   for (int i = 0; i < 8; i++) {
-    if (node->children[i] != NULL)
-      delete destructTree(node->children[i]);
+   delete node->children[i];
   }
-  return node;
 }
 
 BHTree::~BHTree() {
-  destructTree(this);
+  clear(this);
+
 }
 
 void BHTree::buildTree(vector<Particle*> particles) {
@@ -143,8 +140,49 @@ int BHTree::getOctant(Particle* p) {
 }
 
 
-void BHTree::computeForces() {
+Vector3D BHTree::computeForces(Particle* p) {
+  if (this == NULL) {
+    return Vector3D(0.0);
+  }
+  Vector3D force = Vector3D(0.0);
+  
+  if (!is_internal && particle != NULL) {
+    Vector3D distance = particle->position - p->position;
+    const double grav_const = 6.674e-11;
 
+    double damping = 15.0;
+    double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
+    double masses = particle->mass * p->mass;
+    //distance.normalize();
+    force += grav_const * masses / dist_cubed * distance;
+    
+    return force;
+  }
+  double r = (p->position - com).norm();
+  double D = (right_top_front - left_bottom_back).norm();
+  double theta = 5.0;
+  //cout << "D / r = " << D / r << "\n";
+
+  if (D / r < theta) {
+    // sufficiently far => treat internal node like a single big particle
+    Vector3D distance = com - p->position;
+    const double grav_const = 6.674e-11;
+
+    double damping = 15.0;
+    double dist_cubed = pow(distance.norm2() + pow(damping, 2), 3);
+    double masses = total_mass * p->mass;
+    //distance.normalize();
+    force += grav_const * masses / dist_cubed * distance;
+
+  }
+  else {
+    // sufficiently close => recurse
+    for (int i = 0; i < 8; i++) {
+      force += children[i]->computeForces(p);
+    }
+   
+  }
+  return force;
 }
 
 int BHTree::traverseTree(BHTree* node) {

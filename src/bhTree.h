@@ -18,7 +18,7 @@ struct BHTree {
 	void insert(Particle* p);
 
 	int getOctant(Particle* p);
-	void computeForces();
+	Vector3D computeForces(Particle* p);
 	int traverseTree(BHTree* node);
 
 	Particle* particle;

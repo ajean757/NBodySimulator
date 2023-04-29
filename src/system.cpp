@@ -71,12 +71,12 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
     particles.push_back(p);
   }
 
-  Vector3D bb_lbb = Vector3D(-100.0);
+  /*Vector3D bb_lbb = Vector3D(-100.0);
   Vector3D bb_rtf = Vector3D(100.0);
   BHTree* tree = new BHTree(bb_lbb, bb_rtf);
   tree->buildTree(particles);
   int x = 0; 
-  cout << tree->traverseTree(tree);
+  cout << tree->traverseTree(tree);*/
   //for (Particle* p : particles) {
   //  tree->insert(p);
   //}
@@ -113,10 +113,10 @@ void System::buildSingleStarSystem(int num_particles) {
 
 void System::buildSystem() {
   if (active_system_type == 0) {
-    buildSingleStarSystem(100);
+    buildSingleStarSystem(300);
   }
   else {
-    buildTwoGalaxyCollision(70, 30);
+    buildTwoGalaxyCollision(300, 100);
   }
 }
 
@@ -129,7 +129,7 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
 
   // Compute forces
   // Note: unoptimized
-  const double grav_const = 6.674e-11;
+  /*const double grav_const = 6.674e-11;
   for (int i = 0; i < particles.size(); i++) {
     for (int j = i; j < particles.size(); j++) {
       Vector3D distance = particles[j]->position - particles[i]->position;
@@ -143,6 +143,18 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
       particles[j]->forces -= force;      
     }
   }
+  */
+  // Barnes-Hut
+  Vector3D bb_lbb = Vector3D(-20.0); //TODO FIX to make a tighter bbox
+  Vector3D bb_rtf = Vector3D(20.0);
+  BHTree* tree = new BHTree(bb_lbb, bb_rtf);
+  tree->buildTree(particles);
+  
+  for (Particle* p : particles) {
+    p->forces += tree->computeForces(p);
+  }
+
+
 
   for (Particle* p : particles) {
     // Verlet Integration (Broken)
@@ -168,12 +180,12 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     p->last_position = p->position;
     p->position = p->position + vel_halfstep * delta_t;
     p->velocity = vel_halfstep + p->acceleration * delta_t / 2.0;
-
+    
     //cout << "particle loc: " << p->position << "forces: " << p->forces  << "velocity" << p->velocity << "\n";
   }
 
   // Handle Behavior for Particle Collisions
-
+  delete tree;
   timestep++;
 }
 
