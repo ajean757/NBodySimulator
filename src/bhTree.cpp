@@ -10,7 +10,6 @@ BHTree::BHTree(Vector3D left_bottom_back, Vector3D right_top_front) {
 
   total_mass = 0.0;
   com = Vector3D();
-  cluster_count = 0;
   is_internal = false;
   particle = NULL;
   for (int i = 0; i < 8; i++)
@@ -37,15 +36,7 @@ BHTree::~BHTree() {
 void BHTree::buildTree(vector<Particle*> particles) {
 	if (particles.size() == 0) return;
 
-  Vector3D bb_lbb = Vector3D(DBL_MAX);
-  Vector3D bb_rtf = Vector3D(DBL_MIN);
-	for (Particle* p : particles) {
-    if (p->position.x < bb_lbb.x && p->position.y < bb_lbb.y && p->position.z < bb_lbb.z)
-      bb_lbb = p->position;
-    if (p->position.x > bb_rtf.x && p->position.y > bb_rtf.y && p->position.z > bb_rtf.z)
-      bb_rtf = p->position;
-	}
-
+  // Insert all particles into the tree
   for (Particle* p : particles)
     insert(p);
 }
@@ -54,19 +45,21 @@ void BHTree::insert(Particle* p) {
 	if (p == NULL)
 		return;
 
-  if (particle == NULL) {
-    particle = p;
-    total_mass = p->mass;
-    com = p->position;
-    cluster_count = 1;
-    return;
-  }
+  // External empty node (no particle)
+	if (!is_internal && particle == NULL) {
+		particle = p;
+		total_mass = p->mass;
+		com = p->position;
+		return;
+	}
 
+  // Internal node
 	if (is_internal) {
-    com = (cluster_count * com + (p->mass * p->position)) / (cluster_count + 1);
+    com = ((com * total_mass) + (p->mass * p->position)) / (total_mass + p->mass);
     total_mass += p->mass;
     children[getOctant(p)]->insert(p);
 	}
+  // External populated node (already has a particle)
   else {
     double midx = (left_bottom_back.x + right_top_front.x) / 2;
     double midy = (left_bottom_back.y + right_top_front.y) / 2;
@@ -110,9 +103,8 @@ void BHTree::insert(Particle* p) {
     children[getOctant(p)]->insert(p);
 
     particle = NULL;
-    com = (curr->mass * curr->position + p->mass * p->position) / 2;
+    com = (curr->mass * curr->position + p->mass * p->position) / (curr->mass + p->mass);
     total_mass += p->mass;
-    cluster_count = 2;
     is_internal = true;
   }
 }
@@ -130,26 +122,44 @@ int BHTree::getOctant(Particle* p) {
 
   if (p->position.x <= midx) {
     if (p->position.y <= midy) {
-      if (p->position.z <= midz) return 0;
-      else return 4;
+      if (p->position.z <= midz) return 6;
+      else return 2;
     }
     else {
-      if (p->position.z <= midz) return 3;
-      else return 7;
+      if (p->position.z <= midz) return 4;
+      else return 0;
     }
   }
   else {
     if (p->position.y <= midy) {
-      if (p->position.z <= midz) return 1;
-      else return 5;
+      if (p->position.z <= midz) return 7;
+      else return 3;
     }
     else {
-      if (p->position.z <= midz) return 2;
-      else return 6;
+      if (p->position.z <= midz) return 5;
+      else return 1;
     }
   }
 }
 
+
 void BHTree::computeForces() {
 
+}
+
+int BHTree::traverseTree(BHTree* node) {
+  if (node == NULL) {
+    return 0;
+  }
+  if (!node->is_internal && node->particle != NULL) {
+    return 1;
+  }
+  if (!node->is_internal && node->particle == NULL) {
+    return 0;
+  }
+  int sum = 0;
+  for (int i = 0; i < 8; i++) {
+    sum += traverseTree(node->children[i]);
+  }
+  return sum;
 }

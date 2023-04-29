@@ -19,6 +19,7 @@ struct BHTree {
 
 	int getOctant(Particle* p);
 	void computeForces();
+	int traverseTree(BHTree* node);
 
 	Particle* particle;
 	BHTree* children[8];
@@ -27,7 +28,6 @@ struct BHTree {
 	bool is_internal;
 	double total_mass;
 	Vector3D com; // center of mass
-	int cluster_count; // used for iterative updates of center of mass
 
 };
 

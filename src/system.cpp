@@ -71,10 +71,12 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
     particles.push_back(p);
   }
 
-  //Vector3D bb_lbb = Vector3D(-100.0);
-  //Vector3D bb_rtf = Vector3D(100.0);
-  //BHTree* tree = new BHTree(bb_lbb, bb_rtf);
-
+  Vector3D bb_lbb = Vector3D(-100.0);
+  Vector3D bb_rtf = Vector3D(100.0);
+  BHTree* tree = new BHTree(bb_lbb, bb_rtf);
+  tree->buildTree(particles);
+  int x = 0; 
+  cout << tree->traverseTree(tree);
   //for (Particle* p : particles) {
   //  tree->insert(p);
   //}
