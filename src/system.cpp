@@ -147,8 +147,6 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
   }
   */
   // Barnes-Hut
-  //TODO FIX to make a tighter bbox
-  
   Vector3D minPoint = particles[0]->position;
   Vector3D maxPoint = particles[0]->position;
   for (Particle *p : particles) {

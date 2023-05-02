@@ -192,7 +192,6 @@ void NBodySimulator::drawContents() {
   shader.setUniform("u_light_pos", Vector3f(0, 0, 15), false);
   shader.setUniform("u_light_intensity", Vector3f(5, 5, 5), false);
 
-
   for (Particle* p : system->particles) {
     p->render(shader);
   }

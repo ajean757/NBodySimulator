@@ -68,7 +68,6 @@ private:
 
   // OpenGL textures
 
-
   // OpenGL customizable inputs
 
   double m_normal_scaling = 2.0;
