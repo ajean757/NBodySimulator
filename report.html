@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+	  body {
+		  background-color: white;
+		  padding: 100px;
+		  width: 1000px;
+		  margin: auto;
+		  text-align: left;
+		  font-weight: 300;
+		  font-family: 'Open Sans', sans-serif;
+		  color: #121212;
+	  }
+
+	  h1, h2, h3, h4 {
+		  font-family: 'Source Sans Pro', sans-serif;
+	  }
+
+	  kbd {
+		  color: #121212;
+	  }
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>Final Project |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+  <br />
+  <h1 align="middle">Gravity Simulator</h1>
+
+  <h2 align="middle">Alex Jean, Amit Bhandal, Kevyn Ramirez, Ryan Kee</h2>
+
+
+  <div class="padded">
+
+
+    <h3 align="middle">Abstract</h3>
+
+    <p>
+        Our team created a gravity particle simulator that will simulates the interactions of particles in a gravitational field. The simulator visualizes the particles and their trajectories in 3D space. In this project we reasearched the physics of gravitational interactions and improve our understanding of simulation techniques.
+        The simulator allows the user to change parameters such as the number of particles, the strength of the gravitational field, and the initial positions and velocities of the particles. The simulator also visualizes the particles and their trajectories in 3D space.
+    </p>
+   
+
+
+    <h3 align="middle">Technical Approach</h3>
+        
+    <p>Our technical approach involves developing a gravity particle simulator that accurately simulates the interactions of particles in a gravitational field. We decided to use Cloth Sim as a skeleton and base for our N-Body Sim because we wanted to make use of the camera, GUI, and renderer methods. To improve the accuracy and performance of the simulator, we will use the Barnes-Hut algorithm, which reduces the computational complexity of simulating N-bodies from O(N^2) to O(NlogN) by grouping particles into an octree.</p>
+    <p>Our first objective was to understand the Cloth Sim pipeline and GUI / program initialization so we could clone a skeleton version of it. This involved reading clothSimulator.h/cpp and main.cpp to understand how the GUI, renderer, and camera were initialized and being used. Once we had a general understanding, we created a new CMAKE project and copied over the code for any relevant methods, removing unused parameters and objects. Currently, we’re using the default Cloth Sim GUI, but we plan on changing it to make it relevant to our project. 
+        <br>
+        <br>
+        We also had to do a bit of digging into CMakeLists.txt in order to enable the project to be properly compiled. We ran into many compilation errors due to linker issues, this took some time to understand what was going on, but it turned out we forgot to add new files to the CMakeLists.txt file. 
+        <br>
+        <br>
+        After we got our project to compile, our next objective was to render a few spheres. In Cloth Sim, we don’t render any point masses, only the wireframe that’s attached to each Spring. After doing some digging, we found a sphere rendering method, SphereMesh::draw_sphere(), which would render a sphere of specified position and size with a shader applied to it. This was perfect for our project, so we created a new Particle class that would call this method when Particle::render(GLShader) was called on it. This allowed us to successfully render a few particles on the GUI. 
+        <br>
+        <br>
+    </p>
+    <p>Gameplan:</p>
+    <ul>
+        <li>Researched about N-Body simulations</li>
+        <li>Gravitational forces and general physics around it</li>
+        <li>Integration methods: Euler, Verlet, Runge-Kutta</li>
+        <li>Euler is numerically unstable, so we need to choose another method</li>
+        <li>Acceleration Structures: Barnes-Hut, CUDA</li>
+        <li>Read code for clothsim and ported it over to a new cmake project, removing most cloth files and keeping only files for simulation and GUI</li>
+        <li>Refactor point masses and spheres into particles</li>
+    </ul>
+    <p>Algorithms implemented:</p>
+    
+    <p>- Barnes-Hut algorithm: Used to reduce the computational complexity of simulating N-bodies from O(N^2) to O(NlogN) by grouping particles into an octree. The algorithm involves computing the mass distribution and center of mass for each node in the tree, and calculating the force for each node.</p>
+    
+    <p>Techniques used:</p>
+    
+    <p>- OpenGL: Used to visualize the particles and their trajectories in 3D space.<br>
+    - NanoGUI: Used as the library for the GUI.</p>
+    
+    <p>Unique decisions:</p>
+    
+    <p>- Light simulation: Potentially include light simulation, where we could specify certain particles to illuminate light and light up the scene, such as a central star. Then we could specify the material and BSDF of each particle to properly simulate how each particle reflects/refracts the light.</p>
+    
+    <p>Problems encountered and tackled:</p>
+    
+    <p>- Refining the simulation and optimizing the performance of the simulator: We will tackle this by refining the simulation and optimizing the performance of the simulator.</p>
+    <br />
+    <h3 align="middle">Results</h3>
+    <p>
+        todo
+    </p>
+    <h3 align="middle">References</h3>
+    <ul>
+        <li>C++</li>
+        <li>OpenGL</li>
+        <li><a href="https://beltoforion.de/en/barnes-hut-galaxy-simulator/">https://beltoforion.de/en/barnes-hut-galaxy-simulator/</a></li>
+        <li><a href="http://arborjs.org/docs/barnes-hut">http://arborjs.org/docs/barnes-hut</a> (has good illustrations)</li>
+        <li><a href="https://en.wikipedia.org/wiki/N-body_simulation">https://en.wikipedia.org/wiki/N-body_simulation</a> (has good optimization ideas we can do)</li>
+        <li><a href="https://www.youtube.com/watch?v=4J0xdB-CSnU">https://www.youtube.com/watch?v=4J0xdB-CSnU</a> (2D N-body-simulation in unreal 4)</li>
+        <li>Coding Adventure: Ray Tracing- uses Unity to do almost everything from our raytracing project, we can do something similar with Unreal Engine</li>
+        <li>More Barnes Hut: <a href="https://people.eecs.berkeley.edu/~demmel/cs267/lecture26/lecture26.html">https://people.eecs.berkeley.edu/~demmel/cs267/lecture26/lecture26.html</a></li>
+        <li>More N body (barnes hut, FMM): <a href="https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture25_NBody_jwd16_4pp.pdf">https://people.eecs.berkeley.edu/~demmel/cs267_Spr16/Lectures/lecture25_NBody_jwd16_4pp.pdf</a></li>
+        <li>Simulation Methods: <a href="https://www.cs.cmu.edu/afs/cs/academic/class/15850c-s96/www/nbody.html#pp">https://www.cs.cmu.edu/afs/cs/academic/class/15850c-s96/www/nbody.html#pp</a></li>
+        <li><a href="https://arxiv.org/abs/1105.1082">https://arxiv.org/abs/1105.1082</a></li>
+        <li>Parallel Computing: <a href="https://www.cs.unc.edu/~prins/Classes/633/Slides/09-smm4.pdf">https://www.cs.unc.edu/~prins/Classes/633/Slides/09-smm4.pdf</a></li>
+    </ul>
+    
+    <h3 align="middle">Contributions</h3>
+    <p>
+        todo
+    </p>
+
+  </div>
+</body>
+</html>
