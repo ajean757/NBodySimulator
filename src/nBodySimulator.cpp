@@ -452,10 +452,26 @@ void NBodySimulator::initGUI(Screen* screen) {
       system->buildSystem();
     });
 
-    b = new Button(window, "n/a");
+    b = new Button(window, "Tilted Star System");
     b->setFlags(Button::NormalButton);
     b->setFontSize(14);
+    b->setCallback([this]() {
+      is_paused = true;
+      system->reset();
+      system->active_system_type = 2;
+      system->buildSystem();
+      });
 
+    b = new Button(window, "Cloud");
+    b->setFlags(Button::NormalButton);
+    b->setFontSize(14);
+    b->setCallback([this]() {
+      is_paused = true;
+      system->reset();
+      system->active_system_type = 3;
+      system->buildSystem();
+      });
+  
   }
 
 

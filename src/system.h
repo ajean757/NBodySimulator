@@ -52,6 +52,8 @@ struct System {
 private:
   void buildTwoGalaxyCollision(int num_particles0, int num_particles1);
   void buildSingleStarSystem(int num_particles);
+  void buildCloudSystem(int num_particles);
+  void buildTiltedSystem(int num_particles);
 };
 
 

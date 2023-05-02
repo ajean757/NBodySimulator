@@ -64,6 +64,7 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
   max_radius = 5.0;
   for (int i = 0; i < num_particles1; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
+
     Vector3D pos = Vector3D(sample.x + p1_pos.x, sample.y + p1_pos.y, ((-1000 + rand() % 2000) / 1000.0) * 1.0 + p1_pos.z);
     Vector3D dist_from_center = (pos - p1_pos) * dist_scaling;
     dist_from_center.normalize();
@@ -98,12 +99,73 @@ void System::buildSingleStarSystem(int num_particles) {
   }
 }
 
+void System::buildCloudSystem(int num_particles) {
+  // Build cluster 1, centered at p0
+  particles = vector<Particle*>();
+  double central_mass = 1e20;
+  Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
+  particles.push_back(p0);
+
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
+  double max_radius = 10.0;
+  for (int i = 0; i < num_particles; i++) {
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D pos = Vector3D(sample.x, sample.y, sample.z);
+
+    Vector3D dist_from_center = (pos - Vector3D(0.0)) * dist_scaling;
+    dist_from_center.normalize();
+    Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
+    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    p->velocity = initial_v;
+    particles.push_back(p);
+  }
+}
+
+void System::buildTiltedSystem(int num_particles) {
+  // Build cluster 1, centered at p0
+  particles = vector<Particle*>();
+  double central_mass = 1e20;
+  Vector3D p0_pos = Vector3D(0.0);
+  Particle* p0 = new Particle(p0_pos, 1.5, central_mass, false);
+  particles.push_back(p0);
+
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
+  double max_radius = 10.0;
+  for (int i = 0; i < num_particles; i++) {
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D p_sample = Vector3D(sample.x, sample.y, sample.z);
+    Vector3D p_plane = p0_pos;
+    Vector3D n = Vector3D(1.0, 1.0, 1.0);  // defines tilt
+
+    n.normalize();
+    Vector3D r = p_sample - p0_pos;
+    double theta = acos(dot(-n, r) / (n.norm() * r.norm()));
+    double t = dot((p_plane - p_sample), n) / dot(n, n);
+    Vector3D pos = p_sample + n * t;
+
+    Vector3D dist_from_center = cross((pos - p0_pos), n);
+    dist_from_center.normalize();
+    Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * dist_from_center * 1e-4;
+    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    p->velocity = initial_v;
+    particles.push_back(p);
+  }
+}
+
+
+
 void System::buildSystem() {
   if (active_system_type == 0) {
     buildSingleStarSystem(num_particles);  
   }
-  else {
+  else if (active_system_type == 1) {
     buildTwoGalaxyCollision(115, 60);  // TODO we can adapt num_particles to scale based on some distribution 
+  }
+  else if (active_system_type == 2) {
+    buildTiltedSystem(num_particles);
+  }
+  else {
+    buildCloudSystem(num_particles);
   }
 }
 
