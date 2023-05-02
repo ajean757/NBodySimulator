@@ -52,6 +52,7 @@ private:
   // Default simulation values
 
   int frames_per_sec = 90;
+  int num_particles = 10;
   int simulation_steps = 30;
 
   CGL::Vector3D gravity = CGL::Vector3D(0, -9.8, 0);
@@ -59,7 +60,8 @@ private:
 
   // System 
   System* system;
-
+  double simulation_speed = 5.0;  // TODO: create a systemparameter to encapsulate this
+  bool enable_bh_viz = false;
   // OpenGL attributes
 
   int active_shader_idx;

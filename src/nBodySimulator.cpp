@@ -110,6 +110,7 @@ void NBodySimulator::init() {
 
   // Initialize GUI
   screen->setSize(default_window_size);
+
   initGUI(screen);
 
   // Initialize camera
@@ -192,9 +193,25 @@ void NBodySimulator::drawContents() {
   shader.setUniform("u_light_pos", Vector3f(0, 0, 15), false);
   shader.setUniform("u_light_intensity", Vector3f(5, 5, 5), false);
 
-
   for (Particle* p : system->particles) {
     p->render(shader);
+  }
+
+  if (!is_paused) {
+    if (enable_bh_viz) {
+      Matrix4f model;
+      model.setIdentity();
+
+      Matrix4f view = getViewMatrix();
+      Matrix4f projection = getProjectionMatrix();
+
+      Matrix4f viewProjection = projection * view;
+
+      shader.setUniform("u_model", model);
+      shader.setUniform("u_view_projection", viewProjection);
+      system->tree->drawTraversedTree(shader);
+    }
+    delete system->tree;
   }
 
 }
@@ -388,7 +405,28 @@ void NBodySimulator::initGUI(Screen* screen) {
   window->setPosition(Vector2i(default_window_size(0) - 245, 15));
   window->setLayout(new GroupLayout(15, 6, 14, 5));
 
-  // Spring types
+  // Star system types
+  new Label(window, "Number of Particles", "sans-bold");
+
+  {
+    Widget* panel = new Widget(window);
+    GridLayout* layout =
+      new GridLayout(Orientation::Horizontal, 2, Alignment::Middle, 5, 5);
+    layout->setColAlignment({ Alignment::Maximum, Alignment::Fill });
+    layout->setSpacing(0, 10);
+    panel->setLayout(layout);
+
+    new Label(panel, "# of particles :", "sans-bold");
+
+    IntBox<int>* fsec = new IntBox<int>(panel);
+    fsec->setEditable(true);
+    fsec->setFixedSize(Vector2i(100, 20));
+    fsec->setFontSize(14);
+    fsec->setValue(num_particles);
+    fsec->setSpinnable(true);
+    fsec->setCallback([this](int value) { system->num_particles = value; });
+  }
+
 
   new Label(window, "System types", "sans-bold");
 
@@ -420,8 +458,9 @@ void NBodySimulator::initGUI(Screen* screen) {
 
   }
 
-  // Mass-spring parameters
 
+  // Mass-spring parameters
+  /*
   new Label(window, "Parameters", "sans-bold");
 
   {
@@ -451,7 +490,7 @@ void NBodySimulator::initGUI(Screen* screen) {
     fb->setSpinnable(true);
     fb->setMinValue(0);
   }
-
+  */
   // Simulation constants
 
   new Label(window, "Simulation", "sans-bold");
@@ -486,9 +525,9 @@ void NBodySimulator::initGUI(Screen* screen) {
     num_steps->setCallback([this](int value) { simulation_steps = value; });
   }
 
-  // Damping slider and textbox
-
-  new Label(window, "Damping", "sans-bold");
+  // Simulation speed slider and textbox
+  
+  new Label(window, "Simulation Speed", "sans-bold");
 
   {
     Widget* panel = new Widget(window);
@@ -500,17 +539,33 @@ void NBodySimulator::initGUI(Screen* screen) {
 
     TextBox* percentage = new TextBox(panel);
     percentage->setFixedWidth(75);
+    percentage->setValue(to_string(simulation_speed));
+
     percentage->setUnits("%");
     percentage->setFontSize(14);
 
     slider->setCallback([percentage](float value) {
       percentage->setValue(std::to_string(value));
       });
-
+    slider->setFinalCallback([&](float value) {
+      system->simulation_speed = (double)(value * 100);
+    // cout << "Final slider value: " << (int)(value * 100) << endl;
+      });
   }
 
-  // Gravity
+  new Label(window, "Barnes-Hut", "sans-bold");
 
+  {
+    Button* b = new Button(window, "Barnes Hut Visualization");
+    b->setFlags(Button::ToggleButton);
+    b->setPushed(enable_bh_viz);
+    b->setFontSize(14);
+    b->setChangeCallback(
+      [this](bool state) { enable_bh_viz = state; });
+  }
+  
+  // Gravity
+  /*
   new Label(window, "Gravity", "sans-bold");
 
   {
@@ -554,11 +609,11 @@ void NBodySimulator::initGUI(Screen* screen) {
     fb->setSpinnable(true);
     fb->setCallback([this](float value) { gravity.z = value; });
   }
-
+  */
   window = new Window(screen, "Appearance");
   window->setPosition(Vector2i(15, 15));
   window->setLayout(new GroupLayout(15, 6, 14, 5));
-
+  
   // Appearance
 
   {

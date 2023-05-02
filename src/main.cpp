@@ -76,6 +76,7 @@ void createGLContexts() {
 
   // Create a nanogui screen and pass the glfw pointer to initialize
   screen = new Screen();
+
   screen->initialize(window, true);
 
   int width, height;
@@ -228,8 +229,8 @@ int main(int argc, char** argv) {
 
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
-
-    glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
+    glClearColor(10.0f/255.0f, 10.0f/255.0f, 10.0f/255.0f, 1.0f); // change background color
+    //glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 

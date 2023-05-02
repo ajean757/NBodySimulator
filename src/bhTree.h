@@ -1,8 +1,11 @@
 #ifndef BH_TREE
 #define BH_TREE
 
+
 #include <CGL/vector3D.h>
 #include "CGL/CGL.h"
+#include "CGL/color.h"
+
 #include "particle.h"
 
 using namespace CGL;
@@ -20,7 +23,9 @@ struct BHTree {
 	int getOctant(Particle* p);
 	Vector3D computeForces(Particle* p);
 	int traverseTree(BHTree* node);
-	void pruneTree(BHTree* node);
+	//void computeCOM(); // DEPRECATED
+	void draw(GLShader& shader);
+	void drawTraversedTree(GLShader& shader);
 
 	Particle* particle;
 	BHTree* children[8];
@@ -30,6 +35,7 @@ struct BHTree {
 	double total_mass;
 	Vector3D com; // center of mass
 	double dist_scaling = 1e4;
+	double grav_const = 6.674e-11;
 
 };
 
