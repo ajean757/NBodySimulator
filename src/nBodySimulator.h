@@ -50,7 +50,7 @@ private:
   virtual Matrix4f getViewMatrix();
 
   // Default simulation values
-
+  int num_particles = 10; 
   int frames_per_sec = 90;
   int simulation_steps = 30;
 
