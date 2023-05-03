@@ -59,7 +59,9 @@ private:
 
   // System 
   System* system;
-
+  double simulation_speed = 5.0;  // TODO: create a systemparameter to encapsulate this
+  bool enable_bh_viz = false;
+  bool enable_bh = true;
   // OpenGL attributes
 
   int active_shader_idx;

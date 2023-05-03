@@ -29,8 +29,7 @@ struct System {
 
   void buildSystem();
 
-  void simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations/*,
-    vector<CollisionObject*>* collision_objects*/);
+  void simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations, bool mode);
 
   void reset();
 
@@ -48,10 +47,14 @@ struct System {
   // System components
   vector<Particle*> particles;
   BHTree* tree;
+  BHTree* lastTree = NULL; // BHTree created last timestep
+
   // vector<vector<int>> pinned; might wanna keep this pinned list in case we wanna emulate light a solar system with a static sun in the middle or something?
 private:
   void buildTwoGalaxyCollision(int num_particles0, int num_particles1);
   void buildSingleStarSystem(int num_particles);
+  void buildCloudSystem(int num_particles);
+  void buildTiltedSystem(int num_particles);
 };
 
 

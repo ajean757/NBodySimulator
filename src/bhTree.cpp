@@ -22,9 +22,8 @@ void clear(BHTree* node) {
 
   node->particle = NULL;
   for (int i = 0; i < 8; i++) {
-   delete node->children[i];
+    delete node->children[i];
   }
-  
 }
 
 BHTree::~BHTree() {
@@ -46,8 +45,6 @@ void BHTree::insert(Particle* p) {
   // External empty node (no particle)
 	if (!is_internal && particle == NULL) {
 		particle = p;
-		//total_mass += p->mass;
-		//com = p->position;
 		return;
 	}
 
@@ -173,9 +170,6 @@ void BHTree::insert(Particle* p) {
     children[p_octant]->insert(p);
 
     particle = NULL;
-    //com = ((com * total_mass) + (curr->mass * curr->position + p->mass * p->position)) / (total_mass + curr->mass + p->mass);
-    //com = (curr->mass * curr->position + p->mass * p->position) / (curr->mass + p->mass);
-    //total_mass += p->mass;
     is_internal = true;
   }
 }
@@ -250,7 +244,7 @@ Vector3D BHTree::computeForces(Particle* p) {
     Vector3D distance = (particle->position - p->position) * dist_scaling;
     const double grav_const = 6.674e-11;
 
-    double damping = 0.01;
+    double damping = 0.001;
     double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
     double masses = particle->mass * p->mass;
     //distance.normalize();
@@ -261,25 +255,27 @@ Vector3D BHTree::computeForces(Particle* p) {
   double D = (right_top_front - left_bottom_back).norm();
   double theta = 0.7;
   //cout << "D / r = " << D / r << "\n";
-
-  if (D / r < theta) {
+  Vector3D midpoint = (right_top_front + left_bottom_back) / 2;
+  double delta = (com - midpoint).norm();
+  // D / r < theta
+  // D / (r - delta) > theta   
+  // r > D / theta + delta
+  if (r > D / theta + delta) {
     // sufficiently far => treat internal node like a single big particle
     Vector3D distance = (com - p->position) * dist_scaling;
     const double grav_const = 6.674e-11;
 
-    double damping = 0.01;
+    double damping = 0.001;
     double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
     double masses = total_mass * p->mass;
     //distance.normalize();
     force += grav_const * masses / dist_cubed * distance;
-
   }
   else {
     // sufficiently close => recurse
     for (int i = 0; i < 8; i++) {
       if (children[i] != NULL) {
         force += children[i]->computeForces(p);
-
       }
     }
   }
