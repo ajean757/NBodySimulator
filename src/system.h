@@ -38,8 +38,12 @@ struct System {
   // System properties
   int active_system_type;
   int num_particles = 50;
+  int max_radius = 10;
+  bool random_masses = false;
   int timestep;
-  double tot_kinetic_energy;
+
+
+  double tot_kinetic_energy; //TODO can we use this to constrain velocities?
   double tot_potential_energy;
   double dist_scaling = 1e4;
   double simulation_speed = 5.0;
@@ -51,10 +55,11 @@ struct System {
 
   // vector<vector<int>> pinned; might wanna keep this pinned list in case we wanna emulate light a solar system with a static sun in the middle or something?
 private:
-  void buildTwoGalaxyCollision(int num_particles0, int num_particles1);
-  void buildSingleStarSystem(int num_particles);
-  void buildCloudSystem(int num_particles);
-  void buildTiltedSystem(int num_particles);
+  void buildTwoGalaxyCollision(int num_particles0, int num_particles1, int max_radius0, int max_radius1);
+  void buildSingleStarSystem(int num_particles, int max_radius);
+  void buildCloudSystem(int num_particles, int max_radius);
+  void buildCloudWithStar(int num_particles, int max_radius);
+  void buildTiltedSystem(int num_particles, int max_radius);
 };
 
 

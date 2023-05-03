@@ -405,7 +405,7 @@ void NBodySimulator::initGUI(Screen* screen) {
   window->setLayout(new GroupLayout(15, 6, 14, 5));
 
   // Star system types
-  new Label(window, "Number of Particles", "sans-bold");
+  new Label(window, "System Properties", "sans-bold");
 
   {
     Widget* panel = new Widget(window);
@@ -415,15 +415,33 @@ void NBodySimulator::initGUI(Screen* screen) {
     layout->setSpacing(0, 10);
     panel->setLayout(layout);
 
-    new Label(panel, "# of particles :", "sans-bold");
+    new Label(panel, "# of particles:", "sans-bold");
 
-    IntBox<int>* fsec = new IntBox<int>(panel);
-    fsec->setEditable(true);
-    fsec->setFixedSize(Vector2i(100, 20));
-    fsec->setFontSize(14);
-    fsec->setValue(num_particles);
-    fsec->setSpinnable(true);
-    fsec->setCallback([this](int value) { system->num_particles = value; });
+    IntBox<int>* nump = new IntBox<int>(panel);
+    nump->setEditable(true);
+    nump->setFixedSize(Vector2i(100, 20));
+    nump->setFontSize(14);
+    nump->setValue(num_particles);
+    nump->setSpinnable(true);
+    nump->setCallback([this](int value) { system->num_particles = value; });
+
+    new Label(panel, "Max radius:", "sans-bold");
+
+    IntBox<int>* maxr = new IntBox<int>(panel);
+    maxr->setEditable(true);
+    maxr->setFixedSize(Vector2i(100, 20));
+    maxr->setFontSize(14);
+    maxr->setValue(max_radius);
+    maxr->setSpinnable(true);
+    maxr->setCallback([this](int value) { system->max_radius = value; });
+
+    new Label(panel, "Random Masses", "sans-bold");
+    Button* b = new Button(panel, "Enable");
+    b->setFlags(Button::ToggleButton);
+    b->setPushed(random_masses);
+    b->setFontSize(14);
+    b->setChangeCallback(
+      [this](bool state) { system->random_masses = state; });
   }
 
 
@@ -461,7 +479,7 @@ void NBodySimulator::initGUI(Screen* screen) {
       system->buildSystem();
       });
 
-    b = new Button(window, "Cloud");
+    b = new Button(window, "Cloud w/ Center Star");
     b->setFlags(Button::NormalButton);
     b->setFontSize(14);
     b->setCallback([this]() {
@@ -470,7 +488,16 @@ void NBodySimulator::initGUI(Screen* screen) {
       system->active_system_type = 3;
       system->buildSystem();
       });
-  
+    
+    b = new Button(window, "Cloud");
+    b->setFlags(Button::NormalButton);
+    b->setFontSize(14);
+    b->setCallback([this]() {
+      is_paused = true;
+      system->reset();
+      system->active_system_type = 4;
+      system->buildSystem();
+      });
   }
 
 

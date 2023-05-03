@@ -19,7 +19,7 @@ System::~System() {
   particles.clear();
 }
 
-void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
+void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1, int max_radius0, int max_radius1) {
 
   particles = vector<Particle*>();
 
@@ -50,15 +50,20 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
   UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
 
   // Build Cluster 0, centered at p0
-  double max_radius = 8.0;
   for (int i = 0; i < num_particles0; i++) {
-    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D sample = gridSampler.get_sample() * max_radius0;
     Vector3D pos = Vector3D(sample.x + p0_pos.x, sample.y + p0_pos.x, ((-1000 + rand() % 2000) / 1000.0) * 1.0 + p0_pos.z);
 
     Vector3D dist_from_center = (pos - p0_pos) * dist_scaling;
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * p0_mass / (pos - p0_pos).norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
-    Particle* p = new Particle(pos, 0.08, 1.0e10, false);
+    double mass = 1e10;
+    double size = 0.1;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+    Particle* p = new Particle(pos, size, mass, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
@@ -77,9 +82,8 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
     particles.push_back(p);
   }*/
   
-  max_radius = 6.0;
   for (int i = 0; i < num_particles1; i++) {
-    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D sample = gridSampler.get_sample() * max_radius1;
     Vector3D p_sample = Vector3D(sample.x, sample.y, sample.z) + p1_pos;
     Vector3D p_plane = p1_pos;
     
@@ -91,7 +95,13 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
     Vector3D dist_from_center = cross((pos - p1_pos), n);
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * p1_mass / pos.norm()) * dist_from_center * 2e-4;
-    Particle* p = new Particle(pos, 0.08, 1.0e10, false);
+    double mass = 1e10;
+    double size = 0.1;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+    Particle* p = new Particle(pos, size, mass, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
@@ -99,15 +109,14 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
 }
 
 
-void System::buildSingleStarSystem(int num_particles) {
+void System::buildSingleStarSystem(int num_particles, int max_radius) {
   // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
   Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
   particles.push_back(p0);
 
-  CosineWeightedHemisphereSampler3D gridSampler = CosineWeightedHemisphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
-  double max_radius = 10.0;
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
   for (int i = 0; i < num_particles; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
     Vector3D pos = Vector3D(sample.x, sample.y, ((-1000 + rand() % 2000) / 1000.0) * 2.0);
@@ -115,21 +124,27 @@ void System::buildSingleStarSystem(int num_particles) {
     Vector3D dist_from_center = (pos - Vector3D(0.0)) * dist_scaling;
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
-    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    double mass = 1e10;
+    double size = 0.5;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+
+    Particle* p = new Particle(pos, size, mass, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
 }
 
-void System::buildCloudSystem(int num_particles) {
+void System::buildCloudSystem(int num_particles, int max_radius) {
   // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
   Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
   //particles.push_back(p0);
 
-  UniformSphereSampler3D gridSampler = UniformSphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
-  double max_radius = 20.0;
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
   for (int i = 0; i < num_particles; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
     Vector3D pos = Vector3D(sample.x, sample.y, sample.z);
@@ -137,13 +152,50 @@ void System::buildCloudSystem(int num_particles) {
     Vector3D dist_from_center = (pos - Vector3D(0.0)) * dist_scaling;
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
-    Particle* p = new Particle(pos, 0.3, 1.0e10, false);
+    double mass = 1e10;
+    double size = 0.3;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+
+    Particle* p = new Particle(pos, size, mass, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
 }
 
-void System::buildTiltedSystem(int num_particles) {
+void System::buildCloudWithStar(int num_particles, int max_radius) {
+  // Build cluster 0, centered at p0
+  particles = vector<Particle*>();
+  double central_mass = 1e20;
+  Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
+  particles.push_back(p0);
+
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
+  for (int i = 0; i < num_particles; i++) {
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D pos = Vector3D(sample.x, sample.y, sample.z);
+
+    Vector3D dist_from_center = (pos - Vector3D(0.0)) * dist_scaling;
+    dist_from_center.normalize();
+    Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
+
+    double mass = 1e10;
+    double size = 0.3;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+
+    Particle* p = new Particle(pos, size, mass, false);
+    p->velocity = initial_v;
+    particles.push_back(p);
+  }
+}
+
+
+void System::buildTiltedSystem(int num_particles, int max_radius) {
   // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
@@ -151,8 +203,7 @@ void System::buildTiltedSystem(int num_particles) {
   Particle* p0 = new Particle(p0_pos, 1.5, central_mass, false);
   particles.push_back(p0);
 
-  UniformSphereSampler3D gridSampler = UniformSphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
-  double max_radius = 10.0;
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
   for (int i = 0; i < num_particles; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
     Vector3D p_sample = Vector3D(sample.x, sample.y, sample.z);
@@ -168,7 +219,14 @@ void System::buildTiltedSystem(int num_particles) {
     Vector3D dist_from_center = cross((pos - p0_pos), n);
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * dist_from_center * 1e-4;
-    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    double mass = 1e10;
+    double size = 0.5;
+    if (random_masses) {
+      size = ((rand() % 100) / 150.0) + 0.01;
+      mass *= size;
+    }
+
+    Particle* p = new Particle(pos, size, mass, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
@@ -178,16 +236,19 @@ void System::buildTiltedSystem(int num_particles) {
 
 void System::buildSystem() {
   if (active_system_type == 0) {
-    buildSingleStarSystem(num_particles);  
+    buildSingleStarSystem(num_particles, max_radius);  
   }
   else if (active_system_type == 1) {
-    buildTwoGalaxyCollision((int)round(0.6 * num_particles), (int)round(0.4 * num_particles));
+    buildTwoGalaxyCollision((int)round(0.6 * num_particles), (int)round(0.4 * num_particles), (int)round(0.6 * max_radius), (int)round(0.4 * max_radius));
   }
   else if (active_system_type == 2) {
-    buildTiltedSystem(num_particles);
+    buildTiltedSystem(num_particles, max_radius);
+  }
+  else if (active_system_type == 3) {
+    buildCloudWithStar(num_particles, max_radius);
   }
   else {
-    buildCloudSystem(num_particles);
+    buildCloudSystem(num_particles, max_radius);
   }
 }
 
