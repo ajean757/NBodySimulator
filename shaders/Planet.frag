@@ -11,6 +11,18 @@ in vec4 v_tangent;
 
 out vec4 out_color;
 
+vec3 mod289(vec3 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec2 mod289(vec2 x) {
+  return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+
+vec3 permute(vec3 x) {
+  return mod289(((x*34.0)+10.0)*x);
+}
+
 float snoise(vec2 v)
   {
   const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
@@ -32,6 +44,10 @@ float snoise(vec2 v)
   vec4 x12 = x0.xyxy + C.xxzz;
   x12.xy -= i1;
 
+// Permutations
+  i = mod289(i); // Avoid truncation effects in permutation
+  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
+		+ i.x + vec3(0.0, i1.x, 1.0 ));
 
   vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
   m = m*m ;
@@ -40,7 +56,7 @@ float snoise(vec2 v)
 // Gradients: 41 points uniformly over a line, mapped onto a diamond.
 // The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)
 
-  vec3 x = 2.0 * fract(C.www) - 1.0;
+  vec3 x = 2.0 * fract(p * C.www) - 1.0;
   vec3 h = abs(x) - 0.5;
   vec3 ox = floor(x + 0.5);
   vec3 a0 = x - ox;
@@ -64,21 +80,38 @@ float earthNoise(vec2 P) {
     vec2 r1 = vec2(0.70, 0.82); // random numbers
  
     float noise = 0.0; 
-    noise += pnoise2(P+r1) * 0.7 + 0.2;
+    noise += pnoise2(P+r1);
      
     return noise;
 }
 
+float rgbToFloat(vec3 rgb, float scale){
+    return rgb.r +
+        (rgb.g/scale)+
+        (rgb.b/(scale*scale));
+}
+
+vec3 floatToRgb(float v, float scale) {
+    float r = v;
+    float g = mod(v*scale,1.0);
+    r-= g/scale;
+    float b = mod(v*scale*scale,1.0);
+    g-=b/scale;
+    return vec3(r,g,b);
+}
+
 vec3 toColor(float value) {
-    float r = clamp(-value, 0.0, 1.0);
-    float g = clamp(value, 0.0, 1.0);
-    float b = clamp(value, r, g);
+    vec3 noise_vec = floatToRgb(value, 256.0);
+    //float input = rgbToFloat(vec3(u_color), 256.0);
+    float r = clamp(noise_vec.r, 0.0, u_color.r);
+    float g = clamp(noise_vec.g, 0.0, u_color.g);
+    float b = clamp(noise_vec.b, 0.0, u_color.b);
     return vec3(r, g, b);
 }
 
+
 void main() {
-  float noise = earthNoise(vec2(v_normal.z, v_position.z));
-  //vec3 color = vec3(u_light_pos.x, u_light_pos.y, u_light_pos.z);
+  float noise = earthNoise(vec2(v_position.x, v_position.y));
   out_color.rgb += toColor(noise);
   out_color.a = 1;
 }
