@@ -52,7 +52,7 @@ private:
   // Default simulation values
 
   int frames_per_sec = 90;
-  int num_particles = 10;
+  int num_particles = 50;
   int simulation_steps = 30;
 
   CGL::Vector3D gravity = CGL::Vector3D(0, -9.8, 0);

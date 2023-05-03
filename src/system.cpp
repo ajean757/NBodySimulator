@@ -30,38 +30,41 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
 
   // Create Cluster 1's central mass, p1
   double p1_mass = 5e18;
-  Vector3D p1_pos = Vector3D(12.0, 12.0, 0.0);
+  Vector3D p1_pos = Vector3D(7.0, 12.0, 6.0);
   Particle* p1 = new Particle(p1_pos, 1.25, p1_mass, false);
 
   // Set inital velocities for p0 and p1
-  Vector3D dist_from_p0 = (p1_pos - p0_pos) * dist_scaling;
-  dist_from_p0.normalize();
-  Vector3D p1_initial_v = sqrt(grav_const * p0_mass / ((p1_pos - p0_pos).norm())) * Vector3D(-dist_from_p0.y, dist_from_p0.x, 0.0) * 0.5e-4;
-  Vector3D p0_initial_v = sqrt(grav_const * p1_mass / ((p0_pos - p1_pos).norm())) * Vector3D(dist_from_p0.y, -dist_from_p0.x, 0.0) * 0.5e-4;
+  // Set tilt
+  Vector3D n = Vector3D(2.5, 0.8, -2.5);  // defines tilt
+  n.normalize();
+
+  Vector3D dist_from_center = cross((p1_pos - p0_pos), n);
+  dist_from_center.normalize();
+  Vector3D p1_initial_v = sqrt(grav_const * p0_mass / ((p1_pos - p0_pos).norm())) * dist_from_center * 0.5e-4;
   p1->velocity = p1_initial_v;
   //p0->velocity = p0_initial_v;
 
   particles.push_back(p0);
   particles.push_back(p1);
 
-  UniformHemisphereSampler3D gridSampler = UniformHemisphereSampler3D();
+  UniformSphereSampler3D gridSampler = UniformSphereSampler3D();
 
   // Build Cluster 0, centered at p0
   double max_radius = 8.0;
   for (int i = 0; i < num_particles0; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
-    Vector3D pos = Vector3D(sample.x + p0_pos.x, sample.y + p0_pos.x, ((-1000 + rand() % 2000) / 1000.0) * 2.0 + p0_pos.z);
+    Vector3D pos = Vector3D(sample.x + p0_pos.x, sample.y + p0_pos.x, ((-1000 + rand() % 2000) / 1000.0) * 1.0 + p0_pos.z);
 
     Vector3D dist_from_center = (pos - p0_pos) * dist_scaling;
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * p0_mass / (pos - p0_pos).norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
-    Particle* p = new Particle(pos, 0.3, 1.0e10, false);
+    Particle* p = new Particle(pos, 0.08, 1.0e10, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
 
   // Build Cluster 1, centered at p0, add initial velocity 
-  max_radius = 5.0;
+  /*max_radius = 5.0;
   for (int i = 0; i < num_particles1; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
 
@@ -72,13 +75,32 @@ void System::buildTwoGalaxyCollision(int num_particles0, int num_particles1) {
     Particle* p = new Particle(pos, 0.3, 1.0e10, false);
     p->velocity = initial_v;
     particles.push_back(p);
+  }*/
+  
+  max_radius = 6.0;
+  for (int i = 0; i < num_particles1; i++) {
+    Vector3D sample = gridSampler.get_sample() * max_radius;
+    Vector3D p_sample = Vector3D(sample.x, sample.y, sample.z) + p1_pos;
+    Vector3D p_plane = p1_pos;
+    
+    Vector3D r = p_sample - p1_pos;
+    double theta = acos(dot(-n, r) / (n.norm() * r.norm()));
+    double t = dot((p_plane - p_sample), n) / dot(n, n);
+    Vector3D pos = (p_sample + n * t);
+
+    Vector3D dist_from_center = cross((pos - p1_pos), n);
+    dist_from_center.normalize();
+    Vector3D initial_v = sqrt(grav_const * p1_mass / pos.norm()) * dist_from_center * 2e-4;
+    Particle* p = new Particle(pos, 0.08, 1.0e10, false);
+    p->velocity = initial_v;
+    particles.push_back(p);
   }
 
 }
 
 
 void System::buildSingleStarSystem(int num_particles) {
-  // Build cluster 1, centered at p0
+  // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
   Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
@@ -100,14 +122,14 @@ void System::buildSingleStarSystem(int num_particles) {
 }
 
 void System::buildCloudSystem(int num_particles) {
-  // Build cluster 1, centered at p0
+  // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
   Particle* p0 = new Particle(Vector3D(0.0), 1.5, central_mass, false);
-  particles.push_back(p0);
+  //particles.push_back(p0);
 
   UniformSphereSampler3D gridSampler = UniformSphereSampler3D(); // TODO can mess with this and UniformHemisphereSampler3D
-  double max_radius = 10.0;
+  double max_radius = 20.0;
   for (int i = 0; i < num_particles; i++) {
     Vector3D sample = gridSampler.get_sample() * max_radius;
     Vector3D pos = Vector3D(sample.x, sample.y, sample.z);
@@ -115,14 +137,14 @@ void System::buildCloudSystem(int num_particles) {
     Vector3D dist_from_center = (pos - Vector3D(0.0)) * dist_scaling;
     dist_from_center.normalize();
     Vector3D initial_v = sqrt(grav_const * central_mass / pos.norm()) * Vector3D(-dist_from_center.y, dist_from_center.x, 0.0) * 1e-4;
-    Particle* p = new Particle(pos, 0.5, 1.0e10, false);
+    Particle* p = new Particle(pos, 0.3, 1.0e10, false);
     p->velocity = initial_v;
     particles.push_back(p);
   }
 }
 
 void System::buildTiltedSystem(int num_particles) {
-  // Build cluster 1, centered at p0
+  // Build cluster 0, centered at p0
   particles = vector<Particle*>();
   double central_mass = 1e20;
   Vector3D p0_pos = Vector3D(0.0);
@@ -159,7 +181,7 @@ void System::buildSystem() {
     buildSingleStarSystem(num_particles);  
   }
   else if (active_system_type == 1) {
-    buildTwoGalaxyCollision(115, 60);  // TODO we can adapt num_particles to scale based on some distribution 
+    buildTwoGalaxyCollision((int)round(0.6 * num_particles), (int)round(0.4 * num_particles));
   }
   else if (active_system_type == 2) {
     buildTiltedSystem(num_particles);
@@ -171,12 +193,14 @@ void System::buildSystem() {
 
 void System::simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations, bool enable_bh) {
 
-  double delta_t =  simulation_speed * 1.0f / frames_per_sec / simulation_steps ;
+  double delta_t = simulation_speed * 1.0f / frames_per_sec / simulation_steps ;
   // Reset forces
-  for (Particle* p : particles) {
-    p->forces = Vector3D();
+  if (!enable_bh) {
+    for (Particle* p : particles) {
+      p->forces = Vector3D();
+    }
   }
-
+  
   // Compute forces
   if (enable_bh) {
     // Barnes-Hut O(NlogN)
@@ -219,6 +243,7 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     lastTree = tree;
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
+    int a = 0;
   }
   else {
     // Naive Implementation O(N^2)
@@ -236,6 +261,7 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     }
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
+    int a = 0;
   }
 
   for (Particle* p : particles) {

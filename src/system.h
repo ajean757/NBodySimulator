@@ -37,7 +37,7 @@ struct System {
 
   // System properties
   int active_system_type;
-  int num_particles = 10;
+  int num_particles = 50;
   int timestep;
   double tot_kinetic_energy;
   double tot_potential_energy;
