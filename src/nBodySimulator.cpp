@@ -163,7 +163,7 @@ void NBodySimulator::drawContents() {
     vector<CGL::Vector3D> external_accelerations = { gravity };
 
     for (int i = 0; i < simulation_steps; i++) {
-      system->simulate(frames_per_sec, simulation_steps, external_accelerations);
+      system->simulate(frames_per_sec, simulation_steps, external_accelerations, enable_bh);
     }
   }
 
@@ -198,7 +198,7 @@ void NBodySimulator::drawContents() {
   }
 
   if (!is_paused) {
-    if (enable_bh_viz) {
+    if (enable_bh && enable_bh_viz) {
       Matrix4f model;
       model.setIdentity();
 
@@ -211,7 +211,6 @@ void NBodySimulator::drawContents() {
       shader.setUniform("u_view_projection", viewProjection);
       system->tree->drawTraversedTree(shader);
     }
-    delete system->tree;
   }
 
 }
@@ -570,6 +569,15 @@ void NBodySimulator::initGUI(Screen* screen) {
   }
 
   new Label(window, "Barnes-Hut", "sans-bold");
+
+  {
+    Button* b = new Button(window, "Barnes Hut");
+    b->setFlags(Button::ToggleButton);
+    b->setPushed(enable_bh);
+    b->setFontSize(14);
+    b->setChangeCallback(
+      [this](bool state) { enable_bh = state; });
+  }
 
   {
     Button* b = new Button(window, "Barnes Hut Visualization");

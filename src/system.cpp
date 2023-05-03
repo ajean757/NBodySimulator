@@ -169,7 +169,7 @@ void System::buildSystem() {
   }
 }
 
-void System::simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations) {
+void System::simulate(double frames_per_sec, double simulation_steps, vector<Vector3D> external_accelerations, bool enable_bh) {
 
   double delta_t =  simulation_speed * 1.0f / frames_per_sec / simulation_steps ;
   // Reset forces
@@ -178,61 +178,65 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
   }
 
   // Compute forces
-  // Naive Implementation O(N^2)
- /*
-  for (int i = 0; i < particles.size(); i++) {
-    for (int j = i; j < particles.size(); j++) {
-      Vector3D distance = (particles[j]->position - particles[i]->position) * dist_scaling;
-
-      double damping = 0.00001;
-      
-      
-      double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
-      double masses = particles[i]->mass * particles[j]->mass;
-      Vector3D force = grav_const * masses / dist_cubed * distance;
-      particles[i]->forces += force;
-      particles[j]->forces -= force;      
+  if (enable_bh) {
+    // Barnes-Hut O(NlogN)
+    Vector3D minPoint = particles[0]->position;
+    Vector3D maxPoint = particles[0]->position;
+    for (Particle* p : particles) {
+      if (p->position.x < minPoint.x) {
+        minPoint.x = p->position.x;
+      }
+      if (p->position.x >= maxPoint.x) {
+        maxPoint.x = p->position.x;
+      }
+      if (p->position.y < minPoint.y) {
+        minPoint.y = p->position.y;
+      }
+      if (p->position.y >= maxPoint.y) {
+        maxPoint.y = p->position.y;
+      }
+      if (p->position.z < minPoint.z) {
+        minPoint.z = p->position.z;
+      }
+      if (p->position.z >= maxPoint.z) {
+        maxPoint.z = p->position.z;
+      }
     }
+    //cout << "Min: " << minPoint << " Max : " << maxPoint << "\n"; // DEBUG
+
+    auto start = chrono::high_resolution_clock::now();
+    tree = new BHTree(minPoint, maxPoint);
+    tree->is_internal = true;  // Root node should be an internal node
+    tree->buildTree(particles);
+    //cout << tree->traverseTree(tree); // DEBUG
+    for (Particle* p : particles) {
+      p->forces = tree->computeForces(p);
+    }
+    if (lastTree) {
+      delete lastTree;
+      lastTree = NULL;
+    }
+    lastTree = tree;
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
   }
- */
-  // Barnes-Hut O(NlogN)
-  Vector3D minPoint = particles[0]->position;
-  Vector3D maxPoint = particles[0]->position;
-  for (Particle *p : particles) {
-    if (p->position.x < minPoint.x) {
-      minPoint.x = p->position.x;
+  else {
+    // Naive Implementation O(N^2)
+    auto start = chrono::high_resolution_clock::now();
+    for (int i = 0; i < particles.size(); i++) {
+      for (int j = i; j < particles.size(); j++) {
+        Vector3D distance = (particles[j]->position - particles[i]->position) * dist_scaling;
+        double damping = 0.001;
+        double dist_cubed = pow(distance.norm() + pow(damping, 2), 3);
+        double masses = particles[i]->mass * particles[j]->mass;
+        Vector3D force = grav_const * masses / dist_cubed * distance;
+        particles[i]->forces += force;
+        particles[j]->forces -= force;
+      }
     }
-    if (p->position.x >= maxPoint.x)  {
-      maxPoint.x = p->position.x;
-    }
-    if (p->position.y < minPoint.y) {
-      minPoint.y = p->position.y;
-    }
-    if (p->position.y >= maxPoint.y) {
-      maxPoint.y = p->position.y;
-    }
-    if (p->position.z < minPoint.z) {
-      minPoint.z = p->position.z;
-    }
-    if (p->position.z >= maxPoint.z) {
-      maxPoint.z = p->position.z;
-    }
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
   }
-  //cout << "Min: " << minPoint << " Max : " << maxPoint << "\n"; // DEBUG
-
-  auto start = chrono::high_resolution_clock::now();
-  tree = new BHTree(minPoint, maxPoint);
-  tree->is_internal = true;  // Root node should be an internal node
-  tree->buildTree(particles);
-  //cout << tree->traverseTree(tree); // DEBUG
-  for (Particle* p : particles) {
-    p->forces += tree->computeForces(p);
-  }
-  auto stop = chrono::high_resolution_clock::now();
-  auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
-  int a = 8;
-
-
 
   for (Particle* p : particles) {
     // Verlet Integration (Broken)
@@ -258,13 +262,10 @@ void System::simulate(double frames_per_sec, double simulation_steps, vector<Vec
     p->last_position = p->position;
     p->position = p->position + vel_halfstep * delta_t;
     p->velocity = vel_halfstep + p->acceleration * delta_t / 2.0;
-    
+
     //cout << "particle loc: " << p->position << "forces: " << p->forces  << "velocity" << p->velocity << "\n"; // DEBUG
   }
-  
-  // Handle Behavior for Particle Collisions
- 
-  
+
   timestep++;
 }
 

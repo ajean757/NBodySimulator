@@ -22,9 +22,8 @@ void clear(BHTree* node) {
 
   node->particle = NULL;
   for (int i = 0; i < 8; i++) {
-   delete node->children[i];
+    delete node->children[i];
   }
-  
 }
 
 BHTree::~BHTree() {
@@ -46,8 +45,6 @@ void BHTree::insert(Particle* p) {
   // External empty node (no particle)
 	if (!is_internal && particle == NULL) {
 		particle = p;
-		//total_mass += p->mass;
-		//com = p->position;
 		return;
 	}
 
@@ -173,9 +170,6 @@ void BHTree::insert(Particle* p) {
     children[p_octant]->insert(p);
 
     particle = NULL;
-    //com = ((com * total_mass) + (curr->mass * curr->position + p->mass * p->position)) / (total_mass + curr->mass + p->mass);
-    //com = (curr->mass * curr->position + p->mass * p->position) / (curr->mass + p->mass);
-    //total_mass += p->mass;
     is_internal = true;
   }
 }
@@ -276,14 +270,12 @@ Vector3D BHTree::computeForces(Particle* p) {
     double masses = total_mass * p->mass;
     //distance.normalize();
     force += grav_const * masses / dist_cubed * distance;
-
   }
   else {
     // sufficiently close => recurse
     for (int i = 0; i < 8; i++) {
       if (children[i] != NULL) {
         force += children[i]->computeForces(p);
-
       }
     }
   }
