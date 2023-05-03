@@ -2,18 +2,19 @@
 #define PI 3.1415926538
 
 uniform vec4 u_color;
-uniform vec3 u_cam_pos;
-uniform vec3 u_light_pos;
+uniform vec3 u_cam_pos; // view direction
+uniform vec3 u_light_pos; // light direction
 uniform vec3 u_light_intensity;
 
 in vec4 v_position;
-in vec4 v_normal;
+in vec4 v_normal; // surface normal
 in vec4 v_tangent;
 
 out vec4 out_color;
 
+
 void main() {
-  // ambient math
+ // ambient math
   vec3 ambient_light = vec3(1.0);
   float k_a = 0.3;
 
@@ -56,5 +57,4 @@ void main() {
 
 
   out_color.a = 1;
-
 }
