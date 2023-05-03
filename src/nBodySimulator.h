@@ -50,7 +50,7 @@ private:
   virtual Matrix4f getViewMatrix();
 
   // Default simulation values
-
+  int num_particles = 10; 
   int frames_per_sec = 90;
   int num_particles = 50;
   int simulation_steps = 30;
@@ -70,7 +70,6 @@ private:
   vector<std::string> shaders_combobox_names;
 
   // OpenGL textures
-
 
   // OpenGL customizable inputs
 

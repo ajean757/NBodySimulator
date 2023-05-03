@@ -30,6 +30,7 @@ out vec4 v_tangent;
 // which is the final screen-space location of this vertex which the
 // GPU's triangle rasterizer takes in.
 void main() {
+  
   // Here, we just apply the model's transformation to the various
   // per-vertex properties. That way, when the fragment shader reads
   // them, we already have the position in world-space.
